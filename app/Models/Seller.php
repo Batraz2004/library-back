@@ -14,6 +14,8 @@ class Seller extends Authenticatable implements FilamentUser
 {   
     use HasFactory, Notifiable, HasRoles;
 
+    protected string $guard_name = 'seller';
+
     protected $fillable = [
         'name',
         'email',
