@@ -23,7 +23,7 @@ class AdminSeeder extends Seeder
     {
         $fields = [
             'name' => 'admin',
-            'email' => 'admin@admin.dev',
+            'email' => 'admin@lib.dev',
             'phone' => null,
             'password' => Hash::make('dev'),
         ];
@@ -32,12 +32,7 @@ class AdminSeeder extends Seeder
             ...$fields
         ]);
 
-        $role = app(Role::class)->findOrCreate(RoleEnum::ADMIN->value, 'admin');
+        // $role = app(Role::class)->findOrCreate(RoleEnum::ADMIN->value, 'admin'); или // $role = Role::create(['name' => RoleEnum::ADMIN->value]);
         $admin->assignRole(RoleEnum::ADMIN->value);
-
-        // $role = Role::create(['name' => RoleEnum::ADMIN->value]);
-
-        // $admin->assignRole(RoleEnum::ADMIN->value);
-
     }
 }

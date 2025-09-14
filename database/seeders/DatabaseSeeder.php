@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $seeders = [
+            RoleseAndPermissions::class,
             AdminSeeder::class,
             SellerSeeder::class,
         ];
