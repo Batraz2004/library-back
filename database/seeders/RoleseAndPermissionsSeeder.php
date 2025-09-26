@@ -7,7 +7,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Contracts\Role;
 
-class RoleseAndPermissions extends Seeder
+class RoleseAndPermissionsSeeder extends Seeder
 {
     /**
      * Run the database seeds.
