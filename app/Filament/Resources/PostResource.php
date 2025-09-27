@@ -46,8 +46,8 @@ class PostResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('data.title'),
-                TextColumn::make('data.description')->formatState($state) => json_decode($state),
+                TextColumn::make('data.title')->label('title'),
+                TextColumn::make('data.description')->label('description'),
                 // TextColumn::make('data.author'),
                 ToggleColumn::make('is_active'),
                 TextInputColumn::make('sort')->type('number')->rules(['integer','min:0'])->sortable()->label('сортировка')->width('10%')
