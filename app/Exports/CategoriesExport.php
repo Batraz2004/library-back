@@ -20,6 +20,7 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
      */
 
     protected $fieldsList = [];
+    // protected $listItems = []; // для ячейки типа select
     protected $id;
 
     public function __construct($categoryId)
@@ -35,11 +36,22 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
     public function collection()
     {
         $category = $this->getCategory();
-
         $texts = [];
-        foreach ($category->fields as $field) {
-            $this->fieldsList[] = $field['data'];
+        foreach ($category->fields as $key => $field) {
+            $this->fieldsList[] = $field;
             $texts[] = $field['data']['text'] ?? '';
+
+            //если тип список:
+            // if(isset($field['field_list']) && filled($field['field_list']))
+            // {   
+            //     $items = [];
+            //     foreach($field['field_list'] as $listItem)
+            //     {    
+            //         $items []=  $listItem['data']['list-item'];
+            //     }
+            //     $field['field_list'] = $items;
+            //     echo '<pre>'.htmlentities(print_r(1, true)).'</pre>';exit();
+            // }
         }
 
         return collect([$texts]);
@@ -52,7 +64,7 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                 $sheet = $event->sheet->getDelegate();
                 foreach ($this->fieldsList as $key => $val) {
                     $chNumRow = chr(64 + ($key + 1)); //типа по алфавиту
-                    $type = match ($val['type']) {
+                    $type = match ($val['data']['type']) {
                         'number' => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_WHOLE,
                         'decimal' => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL,
                         'text' => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_TEXTLENGTH,
@@ -60,19 +72,42 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                         default => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_TEXTLENGTH,
                     };
 
-                    if ($val['type'] == 'number' || $val['type'] == 'decimal') {
-                        $minSize = 1;
-                        $maxSize = 1000000;
+                    if ($val['data']['type'] == 'number' || $val['data']['type'] == 'decimal') {
+                        $formula1 = 1;
+                        $formula2 = 1000000;
                         $errorMes = 'введите число';
-                    } else if ($val['type'] == 'text') {
-                        $minSize = 0;
-                        $maxSize = 255;
+                    } else if ($val['data']['type'] == 'text') {
+                        $formula1 = 0;
+                        $formula2 = 255;
                         $errorMes = 'введите текст';
+                    } else if ($val['data']['type'] == 'list') {
+
+                        $errorMes = 'не корректнй формат';
+                        $isList = true;
+
+                        //формирование списка 
+                        $items = [];
+                        if (isset($val['field_list'])) {
+                                foreach($val['field_list'] as $listItem)
+                                {    
+                                    $items []=  $listItem['data']['list-item'];
+                                }
+                                $field['field_list'] = $items;
+                        }
+                        $options = $items ?? ['Опция 1', 'Опция 2', 'Опция 3'];
+
+                        $optionsString = '"' . implode(',', $options) . '"';
+
+                        $formula1 = $optionsString;
+                        $formula2 = null;
                     } else {
-                        $minSize = 0;
-                        $maxSize = 255;
+                        $isList = false;
+                        $formula1 = 1;
+                        $formula2 = 255;
                         $errorMes = 'не корректный формат';
                     }
+
+                    $require = $val['data']['require_field'];
                     // $type = \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL;
 
                     for ($row = 2; $row <= 1000; $row++) {
@@ -91,8 +126,14 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                         // $validation->setPrompt('Введите целое число для ID');
 
                         $validation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_BETWEEN);
-                        $validation->setFormula1("$minSize");
-                        $validation->setFormula2("$maxSize");
+                        $validation->setFormula1("$formula1");
+                        $validation->setFormula2("$formula2");
+
+                        //для списка
+                        $validation->setShowDropDown($isList ?? false);
+
+                        //проверка на обязательное поле 
+                        $validation->setAllowBlank($require);
                     }
                 }
             }

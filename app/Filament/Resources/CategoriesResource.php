@@ -46,7 +46,7 @@ class CategoriesResource extends Resource
                                 'list' => 'List',
                                 'text' => 'Text',
                                 'number' => 'Number',
-                                'decimal' => 'DECIMAL',
+                                'decimal' => 'Decimal',
                             ])
                             ->live()//что бы обновлялась страница если выбрал тип list 
                             ->default('text')
@@ -58,7 +58,7 @@ class CategoriesResource extends Resource
                                     fn(StaticAction $action) => $action->label('Удалить запись'),
                                 )
                                 ->schema([
-                                    TextInput::make('data.list.text')->label('текст'),
+                                    TextInput::make('data.list-item')->label('текст'),
                                 ])
                             ->visible(function($get){
                                 return $get('data.type') === 'list';
