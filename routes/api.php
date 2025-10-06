@@ -31,8 +31,17 @@ Route::post('registration', [RegistrationController::class, 'createUser']);
 Route::post('login', [LoginController::class, 'login']);
 
 Route::prefix('excel')->group(function(){
-        Route::get('{id}',function ($id){
-            // $category = Categories::findOrFail($id);
-            return Excel::download(new CategoriesExport($id),'categories'.$id.'.xlsx',\Maatwebsite\Excel\Excel::XLSX);
-        });
+    Route::get('category/{categoryId}',function ($categoryId){
+        $filename = 'categories'.$categoryId.'.xlsx';
+        return Excel::download(new CategoriesExport($categoryId),$filename,\Maatwebsite\Excel\Excel::XLSX);
+    });
+    Route::post('product',function(Request $request){
+        return response()->json([],200);
+    });
+});
+
+Route::prefix('shpreed-excel')->group(function(){
+    Route::get('category/{categoryId}',function ($categoryId){
+
+    });
 });
