@@ -40,7 +40,12 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
         $texts = [];
         foreach ($category->fields as $key => $field) {
             $this->fieldsList[] = $field;
-            $texts[] = $field['data']['text'] ?? '';
+
+            $text = ($field['data']['require_field'] 
+            ? $field['data']['text'].' *' 
+            : $field['data']['text']) ?? '';
+           
+            $texts[] = $text;
 
             //если тип список:
             // if(isset($field['field_list']) && filled($field['field_list']))
@@ -80,7 +85,7 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                         $formula2 = 1000000;
                         $errorMes = 'введите число';
                     } else if ($val['data']['type'] == 'text') {
-                        $formula1 = 0;
+                        $formula1 = 1;
                         $formula2 = 255;
                         $errorMes = 'введите текст';
                     } else if ($val['data']['type'] == 'list') {
@@ -138,11 +143,7 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                     $validation->setShowDropDown($isList ?? false);
 
                     //проверка на обязательное поле 
-                    if($require)
-                    {
-                        $val['data']['text'] = $val['data']['text'].' *';
-                        $validation->setAllowBlank(!$require);//запретить пустые ячейки если поле обязательное
-                    }
+                    $validation->setAllowBlank(!$require);//запретить пустые ячейки если поле обязательное
                     // $validation->setAllowBlank(true);
                     // }
                 }
