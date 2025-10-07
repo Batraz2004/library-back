@@ -112,8 +112,7 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                         $errorMes = 'не корректный формат';
                     }
 
-                    $require = $val['data']['require_field'];
-
+                    $require = $val['data']['require_field'] ?? false;
                     // for ($row = 2; $row <= 1000; $row++) {
                     // $cell = "{$columnLetter}{$row}";
                     // $validation = $sheet->getCell($cell)->getDataValidation();
@@ -122,7 +121,6 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                     $validation = $sheet->getDataValidation($range);
                     $validation->setType($type);
                     $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                    $validation->setAllowBlank(false);
                     $validation->setShowInputMessage(true);
                     $validation->setShowErrorMessage(true);
                     $validation->setErrorTitle('Ошибка ввода');
@@ -140,7 +138,12 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                     $validation->setShowDropDown($isList ?? false);
 
                     //проверка на обязательное поле 
-                    $validation->setAllowBlank($require);
+                    if($require)
+                    {
+                        $val['data']['text'] = $val['data']['text'].' *';
+                        $validation->setAllowBlank(!$require);//запретить пустые ячейки если поле обязательное
+                    }
+                    // $validation->setAllowBlank(true);
                     // }
                 }
             }
