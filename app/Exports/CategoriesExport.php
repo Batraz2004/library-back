@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
@@ -63,12 +64,14 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 foreach ($this->fieldsList as $key => $val) {
-                    $chNumRow = chr(64 + ($key + 1)); //типа по алфавиту
+                    $columnLetter = Coordinate::stringFromColumnIndex($key + 1);
+                    // $chNumRow = chr(64 + ($key + 1)); //типа по алфавиту
                     $type = match ($val['data']['type']) {
                         'number' => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_WHOLE,
                         'decimal' => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL,
                         'text' => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_TEXTLENGTH,
                         'list' => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST,
+                        'multi_select' => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST,
                         default => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_TEXTLENGTH,
                     };
 
@@ -88,14 +91,16 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                         //формирование списка 
                         $items = [];
                         if (isset($val['field_list'])) {
-                                foreach($val['field_list'] as $listItem)
-                                {    
-                                    $items []=  $listItem['data']['list-item'];
-                                }
-                                $field['field_list'] = $items;
+                            foreach ($val['field_list'] as $listItem) {
+                                $items[] =  $listItem['data']['list-item'];
+                            }
+                            $field['field_list'] = $items;
                         }
                         $options = $items ?? ['Опция 1', 'Опция 2', 'Опция 3'];
-
+                        // $options = [];
+                        // for ($i = 1; $i <= 5; $i++) {
+                        //     $options[] = 'Опция' . $i;
+                        // }
                         $optionsString = '"' . implode(',', $options) . '"';
 
                         $formula1 = $optionsString;
@@ -108,33 +113,35 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                     }
 
                     $require = $val['data']['require_field'];
-                    // $type = \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL;
 
-                    for ($row = 2; $row <= 1000; $row++) {
-                        $cell = "$chNumRow{$row}";
+                    // for ($row = 2; $row <= 1000; $row++) {
+                    // $cell = "{$columnLetter}{$row}";
+                    // $validation = $sheet->getCell($cell)->getDataValidation();
 
-                        $validation = $sheet->getCell($cell)->getDataValidation();
-                        $validation->setType($type);
-                        $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                        $validation->setAllowBlank(false);
-                        $validation->setShowInputMessage(true);
-                        $validation->setShowErrorMessage(true);
-                        $validation->setErrorTitle('Ошибка ввода');
-                        $validation->setError($errorMes);
-                        // $validation->setError('ID должен быть целым числом от 1 до 1000000');
-                        // $validation->setPromptTitle('Ввод ID');
-                        // $validation->setPrompt('Введите целое число для ID');
+                    $range = "{$columnLetter}2:{$columnLetter}1000";
+                    $validation = $sheet->getDataValidation($range);
+                    $validation->setType($type);
+                    $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+                    $validation->setAllowBlank(false);
+                    $validation->setShowInputMessage(true);
+                    $validation->setShowErrorMessage(true);
+                    $validation->setErrorTitle('Ошибка ввода');
+                    $validation->setError($errorMes);
 
-                        $validation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_BETWEEN);
-                        $validation->setFormula1("$formula1");
+                    $validation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_BETWEEN);
+                    $validation->setFormula1("$formula1");
+
+                    if (filled($formula2)) //если список то будет null
+                    {
                         $validation->setFormula2("$formula2");
-
-                        //для списка
-                        $validation->setShowDropDown($isList ?? false);
-
-                        //проверка на обязательное поле 
-                        $validation->setAllowBlank($require);
                     }
+
+                    //для списка
+                    $validation->setShowDropDown($isList ?? false);
+
+                    //проверка на обязательное поле 
+                    $validation->setAllowBlank($require);
+                    // }
                 }
             }
         ];

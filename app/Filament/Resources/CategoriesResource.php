@@ -47,6 +47,7 @@ class CategoriesResource extends Resource
                                 'text' => 'Text',
                                 'number' => 'Number',
                                 'decimal' => 'Decimal',
+                                'multi_select' => 'Multi-select',
                             ])
                             ->live()//что бы обновлялась страница если выбрал тип list 
                             ->default('text')
