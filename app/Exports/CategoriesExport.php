@@ -78,6 +78,7 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                 $listItemsSheet =  $spreadsheet->createSheet();
                 $listItemsSheet->setTitle('List');
 
+                $columnListLetter = Coordinate::stringFromColumnIndex(1);
                 foreach ($this->fieldsList as $key => $val) {
                     $columnLetter = Coordinate::stringFromColumnIndex($key + 1);//индекс колонки
 
@@ -124,14 +125,16 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                         
                         //заполнение второй страницы для списка
                         foreach($options as $listKey => $listVal){
-                            $listItemsSheet->getColumnDimension($columnLetter)->setAutoSize(true);
-                            $listItemsSheet->setCellValue($columnLetter.($listKey+1),$listVal);
+                            $listItemsSheet->getColumnDimension($columnListLetter)->setAutoSize(true);
+                            $listItemsSheet->setCellValue($columnListLetter.($listKey+1),$listVal);
                         }
 
                         $title = $listItemsSheet->getTitle();
-                        $optionsString = "'{$title}'!\${$columnLetter}\$1:\${$columnLetter}\$" . count($options);
+                        $optionsString = "'{$title}'!\${$columnListLetter}\$1:\${$columnListLetter}\$" . count($options);
                         $formula1 = $optionsString;
                         $formula2 = null;
+
+                        $columnListLetter++;
                     } else {
                         $isList = false;
                         $formula1 = 1;
