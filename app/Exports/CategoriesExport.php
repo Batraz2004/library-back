@@ -41,10 +41,10 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
         foreach ($category->fields as $key => $field) {
             $this->fieldsList[] = $field;
 
-            $text = ($field['data']['require_field'] 
-            ? $field['data']['text'].' *' 
-            : $field['data']['text']) ?? '';
-           
+            $text = ($field['data']['require_field']
+                ? $field['data']['text'] . ' *'
+                : $field['data']['text']) ?? '';
+
             $texts[] = $text;
 
             //если тип список:
@@ -67,10 +67,21 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
+                //страницы:
+                
+                //основная страница
                 $sheet = $event->sheet->getDelegate();
+                $sheet->setTitle('Template');
+                
+                //страница списков
+                $spreadsheet = $sheet->getParent();
+                $listItemsSheet =  $spreadsheet->createSheet();
+                $listItemsSheet->setTitle('List');
+
                 foreach ($this->fieldsList as $key => $val) {
-                    $columnLetter = Coordinate::stringFromColumnIndex($key + 1);
-                    // $chNumRow = chr(64 + ($key + 1)); //типа по алфавиту
+                    $columnLetter = Coordinate::stringFromColumnIndex($key + 1);//индекс колонки
+
+                    //определение типа колонки
                     $type = match ($val['data']['type']) {
                         'number' => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_WHOLE,
                         'decimal' => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL,
@@ -80,6 +91,8 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                         default => \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_TEXTLENGTH,
                     };
 
+                    
+                    //валидация типа колоноки
                     if ($val['data']['type'] == 'number' || $val['data']['type'] == 'decimal') {
                         $formula1 = 1;
                         $formula2 = 1000000;
@@ -99,15 +112,24 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                             foreach ($val['field_list'] as $listItem) {
                                 $items[] =  $listItem['data']['list-item'];
                             }
-                            $field['field_list'] = $items;
                         }
-                        $options = $items ?? ['Опция 1', 'Опция 2', 'Опция 3'];
-                        // $options = [];
-                        // for ($i = 1; $i <= 5; $i++) {
-                        //     $options[] = 'Опция' . $i;
-                        // }
-                        $optionsString = '"' . implode(',', $options) . '"';
 
+                        // //тестовый список
+                        // $options = [];
+                        // for ($i = 0; $i < 10; $i++) {
+                        //     $options[$i] = 'Опция ' . $i;
+                        //     //
+                        // }
+                        $options = $items ?? ['Опция 1', 'Опция 2', 'Опция 3'];
+                        
+                        //заполнение второй страницы для списка
+                        foreach($options as $listKey => $listVal){
+                            $listItemsSheet->getColumnDimension($columnLetter)->setAutoSize(true);
+                            $listItemsSheet->setCellValue($columnLetter.($listKey+1),$listVal);
+                        }
+
+                        $title = $listItemsSheet->getTitle();
+                        $optionsString = "'{$title}'!\${$columnLetter}\$1:\${$columnLetter}\$" . count($options);
                         $formula1 = $optionsString;
                         $formula2 = null;
                     } else {
@@ -118,11 +140,9 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                     }
 
                     $require = $val['data']['require_field'] ?? false;
-                    // for ($row = 2; $row <= 1000; $row++) {
-                    // $cell = "{$columnLetter}{$row}";
-                    // $validation = $sheet->getCell($cell)->getDataValidation();
-
+                
                     $range = "{$columnLetter}2:{$columnLetter}1000";
+                    $sheet->getColumnDimension($columnLetter)->setAutoSize(true); //->setWidth(120,'pt');
                     $validation = $sheet->getDataValidation($range);
                     $validation->setType($type);
                     $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
@@ -132,64 +152,20 @@ class CategoriesExport implements FromCollection, WithEvents //,  WithHeadings
                     $validation->setError($errorMes);
 
                     $validation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_BETWEEN);
-                    $validation->setFormula1("$formula1");
+                    $validation->setFormula1($formula1);
 
-                    if (filled($formula2)) //если список то будет null
+                    if (!is_null($formula2)) //если список то будет null
                     {
-                        $validation->setFormula2("$formula2");
+                        $validation->setFormula2($formula2);
                     }
 
                     //для списка
                     $validation->setShowDropDown($isList ?? false);
 
                     //проверка на обязательное поле 
-                    $validation->setAllowBlank(!$require);//запретить пустые ячейки если поле обязательное
-                    // $validation->setAllowBlank(true);
-                    // }
+                    $validation->setAllowBlank(!$require); //запретить пустые ячейки если поле обязательное
                 }
             }
         ];
     }
-    // public function map($category): array
-    // {
-    //     $row = [
-    //         // $category->id,
-    //         // $category->title,
-    //         // $category->description,
-    //         // $category->fields,
-    //     ];
-
-    //     foreach($this->fieldsList as $field)
-    //         $row[] = $field;
-
-
-    //     return $row;
-    // }
-
-    // public function headings(): array
-    // {
-    //     $headings = [
-    //         'Заголовок',
-    //         'Описание',
-    //     ];
-
-    //     // foreach($this->fieldsList as $field)
-    //     //     $headings[] = "доп поле".$field;
-
-    //     return $headings;
-    // }
-
-    // public function columnFormats(): array
-    // {
-    //     return [
-    //         'A' => NumberFormat::FORMAT_NUMBER,
-    //     ];
-    // }
-
-    // public function rules(): array
-    // {
-    //     return [
-    //         '1' => ['required', 'integer'],
-    //     ];
-    // }
 }
