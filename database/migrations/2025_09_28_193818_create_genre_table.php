@@ -17,6 +17,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(1);
             $table->integer('position')->default(1);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
