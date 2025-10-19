@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\Client\LoginController;
 use App\Http\Controllers\Client\RegistrationController;
 use App\Models\Book;
@@ -33,37 +34,16 @@ Route::post('registration', [RegistrationController::class, 'createUser']);
 Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
 
+//для не авторизванных сохраним в сессию
 Route::prefix('quest')->middleware('guest')->group(function(){
     Route::prefix('bookmarks')->group(function () {
-        Route::post('add', function (Request $request) {
-            //для не авторизванных сохраним в сессию
-            $book = Book::query()->find($request->book_id);
-            if (!$book) {
-                abort(404);
-            }
-
-            session()->push('user.bookMarks', $book->id);
-
-            // $book = session()->pull('user.bookMarks');получение
-
-            return response()->json(['message' => 'добавлено в избранное', 'product' => $book, 'code' => 200], 200);
-        });
+        Route::post('add', [BookmarkController::class,'createGuest']);
     });
 });
 
 Route::middleware('auth:sanctum')->group(function(){
     Route::prefix('bookmarks')->group(function () {
-        Route::post('add', function (Request $request) {
-
-            $userId = Auth::id();
-
-            $bookMark = new Bookmark();
-            $bookMark->user_id = $userId;
-            $bookMark->book_id = $request->book_id;
-            $bookMark->save();
-
-            return response()->json(['message' => 'добавлено в избранное', 'product' => $bookMark, 'code' => 200], 200);
-        });
+        Route::post('add', [BookmarkController::class,'create']);
     });
 });
 
