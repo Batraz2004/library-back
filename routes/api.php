@@ -40,6 +40,7 @@ Route::prefix('quest')->middleware('guest')->group(function(){
         Route::post('add', [BookmarkController::class,'createGuest']);
         Route::get('list', [BookmarkController::class,'listGuest']);
         Route::delete('delete/{id}', [BookmarkController::class,'deleteGuest']);
+        Route::delete('delete', [BookmarkController::class,'deleteAllGuest']);
     });
 });
 
