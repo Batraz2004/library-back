@@ -35,7 +35,7 @@ Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
 
 //для не авторизванных сохраним в сессию
-Route::prefix('quest')->middleware('guest')->group(function(){
+Route::prefix('guest')->middleware('guest')->group(function(){
     Route::prefix('bookmarks')->group(function () {
         Route::post('add', [BookmarkController::class,'createGuest']);
         Route::get('list', [BookmarkController::class,'listGuest']);
