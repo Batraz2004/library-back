@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('seller_id')->constrained('sellers');
             $table->string('author');
+            $table->string('title');
             $table->string('isbn')->unique();
             $table->decimal('price')->default(0.0);
             $table->integer('count')->default(1);

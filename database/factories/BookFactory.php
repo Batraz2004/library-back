@@ -20,6 +20,7 @@ class BookFactory extends Factory
         return [
             'seller_id' => Seller::query()->first(),
             'author' => fake()->name(),
+            'title' => fake()->name(),
             'isbn' => fake()->uuid(),
             'price' => fake()->randomFloat(3,250,1200),
             'count' => rand(1,10),

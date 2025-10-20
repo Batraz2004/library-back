@@ -29,7 +29,8 @@ class DatabaseSeeder extends Seeder
         
         if(App::environment('local'))//app_env in .env
         {
-            //
+            $seeder[] = PostSeeder::class;
+            $seeder[] = BookSeeder::class;
         }
 
         $this->call($seeders);
