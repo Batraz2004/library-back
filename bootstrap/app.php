@@ -13,10 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(append: [
-            \Illuminate\Session\Middleware\StartSession::class,
-            \Illuminate\Session\Middleware\AuthenticateSession::class,
-            // 'throttle:api' уже должен быть в группе по умолчанию
-            // \Illuminate\Routing\Middleware\SubstituteBindings::class тоже уже там
+            \Illuminate\Session\Middleware\StartSession::class,//без этого сессия бдует очищатся при каждом запросе
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

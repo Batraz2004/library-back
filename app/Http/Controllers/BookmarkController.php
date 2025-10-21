@@ -13,11 +13,14 @@ class BookmarkController extends Controller
     public function create(Request $request)
     {
         $userId = Auth::id();
-
+        if (!Book::find($request->book_id)) {
+            return response()->json(['message' => 'кига не найдена', 'code' => 404], 404);
+        }
         $bookMark = new Bookmark();
         $bookMark->user_id = $userId;
         $bookMark->book_id = $request->book_id;
         $bookMark->save();
+
 
         return response()->json(['message' => 'добавлено в избранное', 'product' => $bookMark, 'code' => 200], 200);
     }
@@ -39,7 +42,7 @@ class BookmarkController extends Controller
                 return response()->json(['message' => 'такого объема нет в наличии', 'code' => 200], 200);
 
             $bookmark = [
-                'quantity' => $request->quantity,
+                'quantity' => intval($request->quantity),
                 'author' => $book->author,
                 'price' => $book->price,
             ];

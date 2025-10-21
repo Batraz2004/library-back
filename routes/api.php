@@ -27,7 +27,7 @@ Route::get('/authTest', function () {
 
 // Route::post('user',);
 Route::get('/user', function (Request $request) {
-    return $request->user();
+    // return $request->user();
 })->middleware('auth:sanctum');
 
 Route::post('registration', [RegistrationController::class, 'createUser']);
