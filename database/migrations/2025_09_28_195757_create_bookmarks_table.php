@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('book_id')->constrained('books');
             $table->foreignId('user_id')->constrained('users');
+            $table->integer('quantity')->default(1);
             $table->unsignedBigInteger('sort_index')->default(500);
             $table->boolean('is_active')->default(1);
             $table->timestamps();
