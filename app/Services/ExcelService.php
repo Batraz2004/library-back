@@ -30,6 +30,7 @@ class ExcelService
             
             $columnLetter = Coordinate::stringFromColumnIndex($key + 1); //индекс колонки
 
+            //установка заголовка
             $sheet->setCellValue($columnLetter.'1',$val['data']['text']);
 
             //определение типа колонки
