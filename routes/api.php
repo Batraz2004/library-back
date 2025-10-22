@@ -4,9 +4,12 @@ use App\Exports\CategoriesExport;
 use App\Http\Controllers\Client\LoginController;
 use App\Http\Controllers\Client\RegistrationController;
 use App\Models\Categories;
+use App\Providers\ExcelServiceProvider;
+use App\Services\ExcelService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 Route::post('/test', function (Request $req) {
     return response()->json([
@@ -31,9 +34,23 @@ Route::post('registration', [RegistrationController::class, 'createUser']);
 Route::post('login', [LoginController::class, 'login']);
 
 Route::prefix('excel')->group(function(){
+    //export maatwebsite + phpoffice:
     Route::get('category/{categoryId}',function ($categoryId){
         $filename = 'categories'.$categoryId.'.xlsx';
         return Excel::download(new CategoriesExport($categoryId),$filename,\Maatwebsite\Excel\Excel::XLSX);
+    });
+    //экспорт полностью через php office:
+    Route::get('export2/{categoryId}',function ($categoryId){
+        $filename = 'categories'.$categoryId.'.xlsx';
+        $category = Categories::query()?->where('id', $categoryId)?->first();
+        $fieldsList = [];
+        foreach ($category->fields as $key => $field) {
+            $fieldsList[] = $field;
+        }
+
+        $excelService = app(ExcelService::class);
+        $excelService->export($fieldsList, $filename);
+        // return Excel::download(new CategoriesExport($categoryId),$filename,\Maatwebsite\Excel\Excel::XLSX);
     });
     Route::post('product',function(Request $request){
         return response()->json([],200);
