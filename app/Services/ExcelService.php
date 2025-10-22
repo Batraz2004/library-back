@@ -19,6 +19,8 @@ class ExcelService
         //основная страница
         $sheet = $this->excelSpread->getActiveSheet();
         $sheet->setTitle('Template');
+        
+        //вся книга
         $spreadsheet = $sheet->getParent();
 
         //страница списков
