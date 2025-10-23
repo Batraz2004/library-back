@@ -18,7 +18,7 @@ class RoleseAndPermissionsSeeder extends Seeder
     {
         $adminRole = app(Role::class)->findOrCreate(RoleEnum::ADMIN->value, RoleEnum::ADMIN->value);
         $sellerRole = app(Role::class)->findOrCreate(RoleEnum::SELLER->value, RoleEnum::SELLER->value);
-        $userRole = app(Role::class)->findOrCreate(RoleEnum::USER->value, 'web');
+        $userRole = app(Role::class)->findOrCreate(RoleEnum::USER->value, 'api');
 
         $permissions = [
             'view Post',
