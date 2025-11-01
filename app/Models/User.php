@@ -11,6 +11,10 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
+/**
+ * @property $id
+ * @property \Illuminate\Database\Eloquent\Collection<int, BookMark> $bookmarks
+ */
 class User extends Authenticatable 
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */

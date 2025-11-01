@@ -2,28 +2,71 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BookMarkRequest;
 use App\Models\Book;
 use App\Models\Bookmark;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class BookmarkController extends Controller
 {
-    public function create(Request $request)
+    public function create(BookMarkRequest $request)
     {
-        $userId = Auth::id();
-        if (!Book::find($request->book_id)) {
-            return response()->json(['message' => 'кига не найдена', 'code' => 404], 404);
+        $user_id = Auth::id();
+        $bookId = $request->book_id;
+        $quantity = $request->quantity;
+
+        $data = $request->getData();
+        $data['user_id']= $user_id ;
+
+        $bookmark = Bookmark::query()->firstOrCreate(['book_id' => $bookId], [
+            $request->getData()
+        ]);
+
+        if (!$bookmark->wasRecentlyCreated) {
+            $bookmark->quantity += $quantity;
+            $bookmark->save();
         }
-        $bookMark = new Bookmark();
-        $bookMark->user_id = $userId;
-        $bookMark->book_id = $request->book_id;
-        $bookMark->save();
 
-
-        return response()->json(['message' => 'добавлено в избранное', 'product' => $bookMark, 'code' => 200], 200);
+        return response()->json([
+            'message' => 'добавлено в избранное',
+            'product' => $bookmark,
+            'code' => 200
+        ], 200);
     }
+
+    public function list()
+    {
+        /**@var User $user */
+        $user = Auth::user();
+        $bookmarks = $user?->bookmarks()->isActive()->get();
+        
+        return response()
+            ->json(['data' => $bookmarks], 200);
+    }
+
+    public function deleteAll()
+    {
+        $user = Auth::user();
+        $bookmarks = $user?->bookmarks->each(function ($item) {
+            $item?->delete();
+        });
+
+        return response()
+            ->json(['data' => 'все записи удалены'], 200);
+    }
+
+    public function deleteById($id)
+    {
+        $bookmark = Bookmark::find($id);
+        $bookmark?->delete();
+
+        return response()
+            ->json(['data' => 'запись удалена'], 200);
+    }
+
 
     public function createGuest(Request $request)
     {
@@ -32,11 +75,10 @@ class BookmarkController extends Controller
             abort(404);
         }
 
-
         $bookmarks = Session::pull('user.bookmarks') ?? [];
 
         if (filled($bookmarks) && array_key_exists($request->book_id, $bookmarks)) {
-            $bookmarks[$request->book_id]['quantity'] += 1;
+            $bookmarks[$request->book_id]['quantity'] += intval($request->quantity);
         } else {
             if ($request->quantity > $book->count)
                 return response()->json(['message' => 'такого объема нет в наличии', 'code' => 200], 200);
@@ -63,7 +105,7 @@ class BookmarkController extends Controller
         $bookmarks = Session::get('user.bookmarks') ?? [];
         return response()->json(['bookmarks' => $bookmarks, 'code' => 200], 200);
     }
-    public function deleteGuest($id)
+    public function deleteByIdGuest($id)
     {
         $bookmarks = Session::pull('user.bookmarks');
         unset($bookmarks[$id]);
