@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\BaseQueryTrait;
+use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -19,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class CartItem extends Model
 {
     use SoftDeletes;
+    use BaseQueryTrait;
 
     protected $guarded = [];
     protected $hidden = ['is_active', 'sort_index'];
@@ -38,5 +41,14 @@ class CartItem extends Model
     public function book(): BelongsTo
     {
         return $this->belongsTo(Book::class);
+    }
+
+    /**
+     * @param Illuminate\Database\Eloquent\Builder $query
+     * @return Illuminate\Database\Eloquent\Builder
+     */
+    public function ScopeIsChecked(Builder $query): Builder
+    {
+        return $query->where('is_checked',1);
     }
 }

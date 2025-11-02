@@ -2,17 +2,16 @@
 
 namespace App;
 
-use Illuminate\Contracts\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 
 trait BaseQueryTrait
 {
     /**
-     * @param $query
+     * @param Builder $query
      * @return Builder
      */
     public function ScopeIsActive(Builder $query): Builder
     {
-        /**@var Bilder $query */
         return $query->where('is_active', 1);
     }
 }

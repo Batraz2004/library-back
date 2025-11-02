@@ -47,7 +47,7 @@ class CartController extends Controller
 
         $cart = $user->cart;
 
-        $cartItems = $cart?->cartItems()->get();
+        $cartItems = $cart?->cartItems()->isActive()->get();
         $cartItems = $cartItems?->each(function ($item, $key) {
             $item->price = $item->book->price;
         });

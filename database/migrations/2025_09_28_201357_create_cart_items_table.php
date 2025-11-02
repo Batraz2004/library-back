@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('quantity')->default(1);
             $table->integer('sort_index')->default(500);
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_checked')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });
