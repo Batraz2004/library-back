@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('admin_id')->constrained();
-            
+            $table->foreignId('admin_id')->constrained()->cascadeOnDelete();
+
             $table->json('data');
 
             $table->boolean('is_active')->default(true);

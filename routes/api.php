@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BookmarkController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\Client\LoginController;
 use App\Http\Controllers\Client\RegistrationController;
 use App\Models\Book;
@@ -36,7 +37,7 @@ Route::post('logout', [LoginController::class, 'logout'])->middleware('auth:sanc
 
 //для не авторизванных сохраним в сессию
 Route::prefix('guest')->middleware('guest')->group(function(){
-    Route::prefix('bookmarks')->group(function () {
+    Route::prefix('bookmark')->group(function () {
         Route::post('add', [BookmarkController::class,'createGuest']);
         Route::get('list', [BookmarkController::class,'listGuest']);
         Route::delete('delete/{id}', [BookmarkController::class,'deleteByIdGuest']);
@@ -45,10 +46,17 @@ Route::prefix('guest')->middleware('guest')->group(function(){
 });
 
 Route::middleware('auth:sanctum')->group(function(){
-    Route::prefix('bookmarks')->group(function () {
+    Route::prefix('bookmark')->group(function () {
         Route::post('add', [BookmarkController::class,'create']);
         Route::get('list', [BookmarkController::class,'list']);
         Route::delete('delete/{id}', [BookmarkController::class,'deleteById']);
         Route::delete('delete', [BookmarkController::class,'deleteAll']);
+    });
+
+    Route::prefix('cart')->group(function(){
+        Route::post('add',[CartController::class,'create']);
+        Route::get('list',[CartController::class,'list']);
+        Route::delete('delete/{id}',[CartController::class,'deleteById']);
+        Route::delete('delete',[CartController::class,'deleteAll']);
     });
 });

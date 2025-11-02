@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('books', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('seller_id')->constrained('sellers');
+            $table->foreignId('seller_id')->constrained('sellers')->cascadeOnDelete();
             $table->string('author');
             $table->string('title');
             $table->string('isbn')->unique();

@@ -14,6 +14,6 @@ class BookSeeder extends Seeder
     public function run(): void
     {
         Book::query()->forceDelete();
-        Book::factory()->count(5)->create();
+        Book::factory()->count(15)->create();
     }
 }

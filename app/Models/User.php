@@ -6,16 +6,24 @@ namespace App\Models;
 
 use Filament\Tables\Columns\Layout\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
- * @property $id
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ * @property carbon $created_at
+ * @property carbon $updated_at
  * @property \Illuminate\Database\Eloquent\Collection<int, BookMark> $bookmarks
+ * @property Model|Cart $cart
  */
-class User extends Authenticatable 
+class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
@@ -54,8 +62,13 @@ class User extends Authenticatable
         ];
     }
 
-    public function bookmarks()
+    public function bookmarks(): HasMany
     {
         return $this->hasMany(Bookmark::class);
+    }
+
+    public function cart(): HasOne
+    {
+        return $this->hasOne(Cart::class);
     }
 }

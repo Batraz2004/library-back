@@ -14,16 +14,20 @@ class BookmarkController extends Controller
 {
     public function create(BookMarkRequest $request)
     {
-        $user_id = Auth::id();
+        $userId = Auth::id();
         $bookId = $request->book_id;
         $quantity = $request->quantity;
 
         $data = $request->getData();
-        $data['user_id']= $user_id ;
+        $data['user_id'] = $userId;
 
-        $bookmark = Bookmark::query()->firstOrCreate(['book_id' => $bookId], [
+        $bookmark = Bookmark::query()->firstOrCreate(
+            [
+                'user_id' => $userId,
+                'book_id' => $bookId
+            ],
             $request->getData()
-        ]);
+        );
 
         if (!$bookmark->wasRecentlyCreated) {
             $bookmark->quantity += $quantity;
@@ -32,7 +36,7 @@ class BookmarkController extends Controller
 
         return response()->json([
             'message' => 'добавлено в избранное',
-            'product' => $bookmark,
+            'data' => $bookmark,
             'code' => 200
         ], 200);
     }
@@ -42,7 +46,7 @@ class BookmarkController extends Controller
         /**@var User $user */
         $user = Auth::user();
         $bookmarks = $user?->bookmarks()->isActive()->get();
-        
+
         return response()
             ->json(['data' => $bookmarks], 200);
     }
@@ -68,7 +72,7 @@ class BookmarkController extends Controller
     }
 
 
-    public function createGuest(Request $request)
+    public function createGuest(BookMarkRequest $request)
     {
         $book = Book::query()->find($request->book_id);
         if (!$book) {
