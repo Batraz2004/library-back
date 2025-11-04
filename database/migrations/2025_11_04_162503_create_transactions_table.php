@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cash_accounts', function (Blueprint $table) {
+        Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->decimal('balance')->default(0);
             $table->string('status')->default('awaiting');
-            $table->string('currency', 3)->default('RUB');
+            $table->foreignId('cash_account_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cash_accounts');
+        Schema::dropIfExists('transactions');
     }
 };

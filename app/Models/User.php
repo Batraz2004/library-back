@@ -22,6 +22,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property carbon $updated_at
  * @property \Illuminate\Database\Eloquent\Collection<int, BookMark> $bookmarks
  * @property Model|Cart $cart
+ * @property Model|CashAccount $account
  */
 class User extends Authenticatable
 {

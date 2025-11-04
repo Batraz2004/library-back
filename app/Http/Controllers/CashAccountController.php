@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\AccountStatusEnum;
 use App\Models\CashAccount;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -52,25 +53,31 @@ class CashAccountController extends Controller
         $amount = $request->amount;
         $currency = $request->currency;
 
+        //открытие счета:
         /**@var CashAccount $balanceAccount */
         $balanceAccount = $user->account()?->firstOrCreate(['user_id' => $user->id], [
             'user_id' => $user->id,
-            'balance' => $amount,
             'currency' => $currency,
-            'status' => AccountStatusEnum::awaiting->value,
+            'status' => AccountStatusEnum::active->value,
         ]);
 
-        // if(!$balanceAccount->wasRecentlyCreated) // это будет создаваться в обработке вебхука
-        // {
-        //     $balanceAccount->balance += $amount;
-        //     $balanceAccount->save();
-        // }
+        if (!$balanceAccount->wasRecentlyCreated) {
+            if ($currency != $balanceAccount->currency)
+                abort(400, 'указанная валюта должна совпадать с валютой счета');
+        }
+
+        //совершение транзакции:
+        $transaction = $balanceAccount->transaction()->create([
+            'status' => AccountStatusEnum::awaiting->value,
+            'cash_account_id' => $balanceAccount->id,
+            'balance' => $amount,
+        ]);
 
         Stripe::setApiKey(config('stripe.stripe_sk'));
 
         $checkoutSession = Session::create([
             'metadata' => [
-                'subscribe_id' => $balanceAccount->id, // вот здесь привязываем id подписки
+                'transaction_id' => $transaction->id, // вот здесь привязываем id подписки
                 'amount' => $amount,
             ],
             'line_items' => [[
@@ -90,6 +97,7 @@ class CashAccountController extends Controller
 
         return response()->json([
             'data' => $balanceAccount,
+            'amount' => $amount,
             'payment_url' => $checkoutSession->url
         ], 200);
     }
@@ -121,15 +129,15 @@ class CashAccountController extends Controller
         // ) {
         //     return $this->webhookPaymentLinkHandling($event, $metadata, $request);
         // } else {
-            //обработка вебхука при офрмлении подписки через шлюз а сайте:
-            $this->webhookGateHandling($event, $metadata);
+        //обработка вебхука при офрмлении подписки через шлюз а сайте:
+        $this->webhookGateHandling($event, $metadata);
         // }
     }
 
     private function webhookGateHandling($event, $metadata)
     {
 
-        $accountId = $metadata['subscribe_id'] ?? null;
+        $accountId = $metadata['transaction_id'] ?? null;
 
         if (is_null($accountId)) {
             Log::error('Account ID not found in metadata', [
@@ -138,31 +146,26 @@ class CashAccountController extends Controller
             return response()->json(['account_id is null'], 400);
         }
 
-        $account = CashAccount::query()->find($accountId);
+        // $account = CashAccount::query()->find($accountId);
+        $transaction = Transaction::query()->find($accountId);
 
         if (
             $event->type === "checkout.session.completed" ||
             $event->type === "checkout.session.async_payment_succeeded"
         ) {
             //логика при успешном зачислении
-            $account->status = AccountStatusEnum::active->value;
-            //при многочилсенном пополнении счета
-            if(!$account->wasRecentlyCreated)
-            {
-                $account->balance += $metadata['amount'] ?? 0;
-            }
-        } 
-           //логика при не успешном зачислении
+            $transaction->status = AccountStatusEnum::active->value;
+        }
+        //логика при не успешном зачислении
         else if (
             $event->type === "checkout.session.expired"
         ) {
-            $account->status = AccountStatusEnum::expired->value;
-        }
-        else if (
+            $transaction->status = AccountStatusEnum::expired->value;
+        } else if (
             $event->type === "checkout.session.async_payment_failed"
         ) {
-           
-            $account->status = AccountStatusEnum::failed->value;
+
+            $transaction->status = AccountStatusEnum::failed->value;
         }
     }
 
@@ -180,7 +183,9 @@ class CashAccountController extends Controller
     {
         /**@var User $user */
         $user = Auth::user();
-        $balance = $user->account()?->get();
+
+        $cashAccaunt = $user->account;
+        $balance = $cashAccaunt->transactionTotalSum;
 
         return response()->json(['data' => $balance], 200);
     }
