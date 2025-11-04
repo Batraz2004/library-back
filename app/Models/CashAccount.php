@@ -2,29 +2,35 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\AccountActiveScope;
-use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use App\Enums\PaymentAccountStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
  * @property double $balance
  * @property string $currency
  * @property string $status
+ * @property double $transactionTotalSum
+ * @property double $total_balance
  */
 
-#[ScopedBy([AccountActiveScope::class])]
 class CashAccount extends Model
 {
     protected $guarded = [];
 
     protected $casts = [
-        'balance' => 'double',
+        'total_balance' => 'double',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function transaction(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
     }
 }

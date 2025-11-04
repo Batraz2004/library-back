@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AccountStatusEnum;
+use App\Enums\PaymentAccountStatusEnum;
+use App\Enums\PaymentTransactionStatusEnum;
 use App\Models\CashAccount;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,32 +19,6 @@ use Stripe\Webhook;
 
 class CashAccountController extends Controller
 {
-    //если транзакцию нужно сделать на сайте а не через шлюз 
-    // public function create(Request $request)
-    // {
-    //     Stripe::setApiKey(config('stripe.stripe_sk'));
-
-    //     // //формирование прямо в беке запрещено
-    //     // $token = Token::create([
-    //     //     'card' => [
-    //     //         'number' => $request->card_number,
-    //     //         'exp_month' => $request->exp_month,
-    //     //         'exp_year' => $request->exp_year,
-    //     //         'cvc' => $request->cvc,
-    //     //     ],
-    //     // ]);
-
-    //     $payment = PaymentIntent::create([
-    //         "amount" => $request->price * 100,
-    //         "currency" => "rub",
-    //         // "source" => $token,
-    //         "source" => $request->token,
-    //         "description" => "Test transaction"
-    //     ]);
-
-    //     //логика после создания
-    // }
-
     //шлюз страйпа
     public function create(Request $request)
     {
@@ -52,25 +28,34 @@ class CashAccountController extends Controller
         $amount = $request->amount;
         $currency = $request->currency;
 
+        //открытие счета:
         /**@var CashAccount $balanceAccount */
         $balanceAccount = $user->account()?->firstOrCreate(['user_id' => $user->id], [
             'user_id' => $user->id,
-            'balance' => $amount,
             'currency' => $currency,
-            'status' => AccountStatusEnum::awaiting->value,
+            'status' => PaymentAccountStatusEnum::awaiting->value,//при первом заполнении станет active
         ]);
 
-        // if(!$balanceAccount->wasRecentlyCreated) // это будет создаваться в обработке вебхука
-        // {
-        //     $balanceAccount->balance += $amount;
-        //     $balanceAccount->save();
-        // }
+        if (!$balanceAccount->wasRecentlyCreated) {
+            if ($currency != $balanceAccount->currency)
+                abort(400, 'указанная валюта должна совпадать с валютой счета');
+        }
+
+        //сохраним запись транзакции:
+
+        /**@var Transaction $transaction */
+        $transaction = $balanceAccount->transaction()->create([
+            'status' => PaymentTransactionStatusEnum::awaiting->value,
+            'cash_account_id' => $balanceAccount->id,
+            'balance' => $amount,
+        ]);
 
         Stripe::setApiKey(config('stripe.stripe_sk'));
 
         $checkoutSession = Session::create([
             'metadata' => [
-                'subscribe_id' => $balanceAccount->id, // вот здесь привязываем id подписки
+                'transaction_id' => $transaction->id, // вот здесь привязываем id подписки
+                'account_id' => $balanceAccount->id,
                 'amount' => $amount,
             ],
             'line_items' => [[
@@ -90,6 +75,7 @@ class CashAccountController extends Controller
 
         return response()->json([
             'data' => $balanceAccount,
+            'amount' => $amount,
             'payment_url' => $checkoutSession->url
         ], 200);
     }
@@ -121,17 +107,18 @@ class CashAccountController extends Controller
         // ) {
         //     return $this->webhookPaymentLinkHandling($event, $metadata, $request);
         // } else {
-            //обработка вебхука при офрмлении подписки через шлюз а сайте:
-            $this->webhookGateHandling($event, $metadata);
+        //обработка вебхука при офрмлении подписки через шлюз а сайте:
+        $this->webhookGateHandling($event, $metadata);
         // }
     }
 
     private function webhookGateHandling($event, $metadata)
     {
+        $transactionId = $metadata['transaction_id'] ?? null;
+        $accountId = $metadata['account_id'] ?? null;
+        $amount = $metadata['amount'] ?? 0;
 
-        $accountId = $metadata['subscribe_id'] ?? null;
-
-        if (is_null($accountId)) {
+        if (is_null($transactionId)) {
             Log::error('Account ID not found in metadata', [
                 'available_metadata' => $metadata,
             ]);
@@ -139,30 +126,26 @@ class CashAccountController extends Controller
         }
 
         $account = CashAccount::query()->find($accountId);
+        $transaction = Transaction::query()->find($transactionId);
 
         if (
             $event->type === "checkout.session.completed" ||
             $event->type === "checkout.session.async_payment_succeeded"
         ) {
             //логика при успешном зачислении
-            $account->status = AccountStatusEnum::active->value;
-            //при многочилсенном пополнении счета
-            if(!$account->wasRecentlyCreated)
-            {
-                $account->balance += $metadata['amount'] ?? 0;
-            }
-        } 
-           //логика при не успешном зачислении
+            $transaction->status = PaymentTransactionStatusEnum::adding->value;
+            $account->status = PaymentAccountStatusEnum::active->value;
+            $account->total_balance += $amount;
+        }
+        //логика при не успешном зачислении
         else if (
             $event->type === "checkout.session.expired"
         ) {
-            $account->status = AccountStatusEnum::expired->value;
-        }
-        else if (
+            $transaction->status = PaymentTransactionStatusEnum::expired->value;
+        } else if (
             $event->type === "checkout.session.async_payment_failed"
         ) {
-           
-            $account->status = AccountStatusEnum::failed->value;
+            $transaction->status = PaymentTransactionStatusEnum::failed->value;
         }
     }
 
@@ -178,14 +161,10 @@ class CashAccountController extends Controller
 
     public function succes()
     {
-        /**@var User $user */
-        $user = Auth::user();
-        $balance = $user->account()?->get();
-
-        return response()->json(['data' => $balance], 200);
+        return response()->json(['message' => 'совершена оплата'], 200);
     }
 
-    public function cancell()
+    public function cancel()
     {
         return response()->json(['message' => 'оплата отменена'], 200);
     }
