@@ -71,4 +71,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(Cart::class);
     }
+
+    public function account(): HasOne
+    {
+        return $this->hasOne(CashAccount::class);
+    }
 }

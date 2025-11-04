@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CashAccountController;
 use App\Http\Controllers\Client\LoginController;
 use App\Http\Controllers\Client\RegistrationController;
+use App\Http\Controllers\OrderController;
 use App\Models\Book;
 use App\Models\Bookmark;
 use App\Models\Cart;
@@ -59,4 +61,19 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::delete('delete/{id}',[CartController::class,'deleteById']);
         Route::delete('delete',[CartController::class,'deleteAll']);
     });
+
+    Route::prefix('order')->group(function(){
+        Route::post('add',[OrderController::class,'create']);
+        Route::get('list',[OrderController::class,'list']);
+        Route::delete('delete/{id}',[OrderController::class,'deleteById']);
+        Route::delete('delete',[OrderController::class,'deleteAll']);
+    });
+
+    Route::prefix('balance')->group(function(){
+        Route::post('add',[CashAccountController::class,'create']);
+    });
+});
+
+Route::prefix('stripe')->group(function(){
+    Route::post('update-status',[CashAccountController::class,'accountStatusUpdate']);
 });
