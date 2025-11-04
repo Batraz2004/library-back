@@ -38,42 +38,47 @@ Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
 
 //для не авторизванных сохраним в сессию
-Route::prefix('guest')->middleware('guest')->group(function(){
+Route::prefix('guest')->middleware('guest')->group(function () {
     Route::prefix('bookmark')->group(function () {
-        Route::post('add', [BookmarkController::class,'createGuest']);
-        Route::get('list', [BookmarkController::class,'listGuest']);
-        Route::delete('delete/{id}', [BookmarkController::class,'deleteByIdGuest']);
-        Route::delete('delete', [BookmarkController::class,'deleteAllGuest']);
+        Route::post('add', [BookmarkController::class, 'createGuest']);
+        Route::get('list', [BookmarkController::class, 'listGuest']);
+        Route::delete('delete/{id}', [BookmarkController::class, 'deleteByIdGuest']);
+        Route::delete('delete', [BookmarkController::class, 'deleteAllGuest']);
     });
 });
 
-Route::middleware('auth:sanctum')->group(function(){
+Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('bookmark')->group(function () {
-        Route::post('add', [BookmarkController::class,'create']);
-        Route::get('list', [BookmarkController::class,'list']);
-        Route::delete('delete/{id}', [BookmarkController::class,'deleteById']);
-        Route::delete('delete', [BookmarkController::class,'deleteAll']);
+        Route::post('add', [BookmarkController::class, 'create']);
+        Route::get('list', [BookmarkController::class, 'list']);
+        Route::delete('delete/{id}', [BookmarkController::class, 'deleteById']);
+        Route::delete('delete', [BookmarkController::class, 'deleteAll']);
     });
 
-    Route::prefix('cart')->group(function(){
-        Route::post('add',[CartController::class,'create']);
-        Route::get('list',[CartController::class,'list']);
-        Route::delete('delete/{id}',[CartController::class,'deleteById']);
-        Route::delete('delete',[CartController::class,'deleteAll']);
+    Route::prefix('cart')->group(function () {
+        Route::post('add', [CartController::class, 'create']);
+        Route::get('list', [CartController::class, 'list']);
+        Route::delete('delete/{id}', [CartController::class, 'deleteById']);
+        Route::delete('delete', [CartController::class, 'deleteAll']);
     });
 
-    Route::prefix('order')->group(function(){
-        Route::post('add',[OrderController::class,'create']);
-        Route::get('list',[OrderController::class,'list']);
-        Route::delete('delete/{id}',[OrderController::class,'deleteById']);
-        Route::delete('delete',[OrderController::class,'deleteAll']);
+    Route::prefix('order')->group(function () {
+        Route::post('add', [OrderController::class, 'create']);
+        Route::get('list', [OrderController::class, 'list']);
+        Route::delete('delete/{id}', [OrderController::class, 'deleteById']);
+        Route::delete('delete', [OrderController::class, 'deleteAll']);
     });
 
-    Route::prefix('balance')->group(function(){
-        Route::post('add',[CashAccountController::class,'create']);
+    Route::prefix('balance')->group(function () {
+        Route::post('add', [CashAccountController::class, 'create']);
     });
 });
 
-Route::prefix('stripe')->group(function(){
-    Route::post('update-status',[CashAccountController::class,'accountStatusUpdate']);
+Route::prefix('stripe')->group(function () {
+    Route::post('update-status', [CashAccountController::class, 'accountStatusUpdate']);
+});
+
+Route::prefix('balance')->group(function () {
+    Route::get('succes', [CashAccountController::class, 'succes']);
+    Route::get('cancel', [CashAccountController::class, 'cancel']);
 });

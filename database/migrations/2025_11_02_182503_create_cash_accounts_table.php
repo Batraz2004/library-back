@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('status')->default('awaiting');
+            $table->decimal('total_balance')->default(0);
             $table->string('currency', 3)->default('RUB');
             $table->timestamps();
         });

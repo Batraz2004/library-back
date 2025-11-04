@@ -136,18 +136,19 @@ class CashAccountController extends Controller
 
     private function webhookGateHandling($event, $metadata)
     {
+        $transactionId = $metadata['transaction_id'] ?? null;
+        $accountId = $metadata['account_id'] ?? null;
+        $amount = $metadata['amount'] ?? 0;
 
-        $accountId = $metadata['transaction_id'] ?? null;
-
-        if (is_null($accountId)) {
+        if (is_null($transactionId)) {
             Log::error('Account ID not found in metadata', [
                 'available_metadata' => $metadata,
             ]);
             return response()->json(['account_id is null'], 400);
         }
 
-        // $account = CashAccount::query()->find($accountId);
-        $transaction = Transaction::query()->find($accountId);
+        $account = CashAccount::query()->find($accountId);
+        $transaction = Transaction::query()->find($transactionId);
 
         if (
             $event->type === "checkout.session.completed" ||
@@ -155,6 +156,7 @@ class CashAccountController extends Controller
         ) {
             //логика при успешном зачислении
             $transaction->status = AccountStatusEnum::active->value;
+            $account->total_balance += $amount;
         }
         //логика при не успешном зачислении
         else if (
@@ -164,7 +166,6 @@ class CashAccountController extends Controller
         } else if (
             $event->type === "checkout.session.async_payment_failed"
         ) {
-
             $transaction->status = AccountStatusEnum::failed->value;
         }
     }
@@ -181,16 +182,10 @@ class CashAccountController extends Controller
 
     public function succes()
     {
-        /**@var User $user */
-        $user = Auth::user();
-
-        $cashAccaunt = $user->account;
-        $balance = $cashAccaunt->transactionTotalSum;
-
-        return response()->json(['data' => $balance], 200);
+        return response()->json(['message' => 'совершена оплата'], 200);
     }
 
-    public function cancell()
+    public function cancel()
     {
         return response()->json(['message' => 'оплата отменена'], 200);
     }

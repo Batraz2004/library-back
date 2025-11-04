@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $currency
  * @property string $status
  * @property double $transactionTotalSum
+ * @property double $total_balance
  */
 class CashAccount extends Model
 {
