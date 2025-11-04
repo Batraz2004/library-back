@@ -49,28 +49,29 @@ class CashAccountController extends Controller
         /**@var User $user*/
         $user = Auth::user();
 
-        $balance = $request->amount;
+        $amount = $request->amount;
         $currency = $request->currency;
 
         /**@var CashAccount $balanceAccount */
         $balanceAccount = $user->account()?->firstOrCreate(['user_id' => $user->id], [
             'user_id' => $user->id,
-            'balance' => $balance,
+            'balance' => $amount,
             'currency' => $currency,
             'status' => AccountStatusEnum::awaiting->value,
         ]);
 
-        if(!$balanceAccount->wasRecentlyCreated)
-        {
-            $balanceAccount->balance += $balance;
-            $balanceAccount->save();
-        }
+        // if(!$balanceAccount->wasRecentlyCreated) // это будет создаваться в обработке вебхука
+        // {
+        //     $balanceAccount->balance += $amount;
+        //     $balanceAccount->save();
+        // }
 
         Stripe::setApiKey(config('stripe.stripe_sk'));
 
         $checkoutSession = Session::create([
             'metadata' => [
                 'subscribe_id' => $balanceAccount->id, // вот здесь привязываем id подписки
+                'amount' => $amount,
             ],
             'line_items' => [[
                 'price_data' => [
@@ -78,7 +79,7 @@ class CashAccountController extends Controller
                     'product_data' => [
                         'name' => 'user-balance', // название подписки
                     ],
-                    'unit_amount' => $balance * 100, // или цена из продукта
+                    'unit_amount' => $amount * 100, // или цена из продукта
                 ],
                 'quantity' => 1,
             ]],
@@ -143,8 +144,13 @@ class CashAccountController extends Controller
             $event->type === "checkout.session.completed" ||
             $event->type === "checkout.session.async_payment_succeeded"
         ) {
-           //логика при успешном зачислении
+            //логика при успешном зачислении
             $account->status = AccountStatusEnum::active->value;
+            //при многочилсенном пополнении счета
+            if(!$account->wasRecentlyCreated)
+            {
+                $account->balance += $metadata['amount'] ?? 0;
+            }
         } 
            //логика при не успешном зачислении
         else if (
