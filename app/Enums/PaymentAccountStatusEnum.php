@@ -2,10 +2,11 @@
 
 namespace App\Enums;
 
-Enum AccountStatusEnum:string
+Enum PaymentAccountStatusEnum:string
 {
     case active = 'active';
     case awaiting = 'awaiting';
     case expired = 'expired';
     case failed = 'failed';
+    case disabled = 'disabled';
 }

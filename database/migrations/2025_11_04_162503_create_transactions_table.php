@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->decimal('balance')->default(0);
-            $table->string('status')->default('awaiting');
+            $table->string('status');
             $table->foreignId('cash_account_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
         });

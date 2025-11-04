@@ -19,6 +19,10 @@ class CashAccount extends Model
 {
     protected $guarded = [];
 
+    protected $casts = [
+        'total_balance' => 'double',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -27,10 +31,5 @@ class CashAccount extends Model
     public function transaction(): HasMany
     {
         return $this->hasMany(Transaction::class);
-    }
-
-    public function getTransactionTotalSumAttribute()
-    {
-        return $this->transaction()->sum('balance');
     }
 }

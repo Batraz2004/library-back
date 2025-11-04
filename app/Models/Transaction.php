@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $status
  */
 
-#[ScopedBy([TransactionActiveScope::class])]
 class Transaction extends Model
 {
     protected $guarded = [];
