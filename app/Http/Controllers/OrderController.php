@@ -24,7 +24,8 @@ class OrderController extends Controller
         $user = Auth::user();
 
         //баланс пользователя
-        $userBalance = $user->account->total_balance;
+        $userAccount = $user->account;
+        $userBalance = $userAccount->total_balance;
 
         //выбранные товары в корзине
         /** @var \Illuminate\Database\Eloquent\Builder $query */
@@ -42,10 +43,10 @@ class OrderController extends Controller
             return $item->book_sum_price * $item->quantity;
         });
 
-        if ($userBalance < $totalPrice) {
+        if ($userBalance < $totalPrice || blank($checkedCartItems)) {
             return response()->json(
                 [
-                    'message' => 'не достаточно средств',
+                    'message' => 'не возможно оформить заказ',
                     'code' => 400
                 ],
                 400
@@ -54,6 +55,9 @@ class OrderController extends Controller
             //процесс оформления заказа
             try {
                 DB::beginTransaction();
+
+                $userAccount->total_balance -= $totalPrice;
+                $userAccount->save();
 
                 $order = Order::create([
                     'user_id'    => $user->id,
@@ -75,7 +79,7 @@ class OrderController extends Controller
                     $item->delete();
                 });
 
-                $responce = OrderStatusEnum::active->value;
+                $response = OrderStatusEnum::active->value;
 
                 DB::commit();
             } catch (Throwable $th) {
@@ -83,12 +87,12 @@ class OrderController extends Controller
 
                 Log::debug("произошла ошибка:" . $th->getMessage() . " строка:" . $th->getLine());
 
-                $responce = OrderStatusEnum::error->value;
+                $response = OrderStatusEnum::error->value;
             }
 
             return response()->json(
                 [
-                    'status' => $responce,
+                    'status' => $response,
                     'code' => 200
                 ],
                 200
@@ -98,13 +102,12 @@ class OrderController extends Controller
 
     public function list()
     {
-        try{
+        try {
             /** @var User $user */
             $user = Auth::user();
 
             /** @method Builder query() */
-            $order = $user->query()
-                ->orders()
+            $order = $user->orders()
                 ->with('items')
                 ->get();
 
@@ -112,14 +115,15 @@ class OrderController extends Controller
                 'data' => $order,
                 'code' => 200,
             ], 200);
-        }
-        catch(Throwable $th){
+        } catch (Throwable $th) {
             Log::debug("произошла ошибка:" . $th->getMessage() . " строка:" . $th->getLine());
 
             return response()->json([
-                'message' => "произошла ошибка:".$th->getMessage(),
+                'message' => "произошла ошибка:" . $th->getMessage(),
                 'code' => $th->getCode(),
             ], $th->getCode());
         }
     }
+
+    public function cancelOrder(Request $request) {}
 }
