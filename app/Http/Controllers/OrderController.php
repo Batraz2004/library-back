@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,7 @@ class OrderController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+
         //баланс пользователя
         $userBalance = $user->account->total_balance;
 
@@ -41,7 +43,8 @@ class OrderController extends Controller
         });
 
         if ($userBalance < $totalPrice) {
-            return response()->json([
+            return response()->json(
+                [
                     'message' => 'не достаточно средств',
                     'code' => 400
                 ],
@@ -53,16 +56,16 @@ class OrderController extends Controller
                 DB::beginTransaction();
 
                 $order = Order::create([
-                    'user_id' => $user->id,
-                    'address' => $request->address,
+                    'user_id'    => $user->id,
+                    'address'    => $request->address,
                     'full_price' => $totalPrice,
-                    'phone' => $request->phone,
+                    'phone'      => $request->phone,
                 ]);
 
                 $checkedCartItems->each(function ($item, $key) use ($order) {
                     $orderItem = OrderItem::create([
                         'order_id' => $order->id,
-                        'book_id' => $item->book_id,
+                        'book_id'  => $item->book_id,
                         'quantity' => $item->quantity,
                         'price' => $item->book_sum_price,
                     ]);
@@ -78,12 +81,13 @@ class OrderController extends Controller
             } catch (Throwable $th) {
                 DB::rollBack();
 
-                Log::debug("произошла ошибка:" . $th->getMessage()." строка:".$th->getLine());
+                Log::debug("произошла ошибка:" . $th->getMessage() . " строка:" . $th->getLine());
 
                 $responce = OrderStatusEnum::error->value;
             }
 
-            return response()->json([
+            return response()->json(
+                [
                     'status' => $responce,
                     'code' => 200
                 ],
@@ -92,9 +96,30 @@ class OrderController extends Controller
         }
     }
 
-    public function list(Request $request)
+    public function list()
     {
-        /** @var User $user */
-        $user = Auth::user();
+        try{
+            /** @var User $user */
+            $user = Auth::user();
+
+            /** @method Builder query() */
+            $order = $user->query()
+                ->orders()
+                ->with('items')
+                ->get();
+
+            return response()->json([
+                'data' => $order,
+                'code' => 200,
+            ], 200);
+        }
+        catch(Throwable $th){
+            Log::debug("произошла ошибка:" . $th->getMessage() . " строка:" . $th->getLine());
+
+            return response()->json([
+                'message' => "произошла ошибка:".$th->getMessage(),
+                'code' => $th->getCode(),
+            ], $th->getCode());
+        }
     }
 }
