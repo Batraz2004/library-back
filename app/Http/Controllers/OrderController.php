@@ -74,8 +74,6 @@ class OrderController extends Controller
                         'price' => $item->book_sum_price,
                     ]);
 
-                    $orderItem->save();
-
                     $item->delete();
                 });
 
@@ -125,5 +123,45 @@ class OrderController extends Controller
         }
     }
 
-    public function cancelOrder(Request $request) {}
+    public function cancellById($id)
+    {
+        try {
+            /** @var User $user */
+            $user = Auth::user();
+
+            //баланс пользователя
+            $userAccount = $user->account;
+
+            $order = $user
+                ->orders()
+                ->getQuery()
+                ->firstWhere(['id' => $id]);
+
+            if ($order->status === OrderStatusEnum::active->value) {
+                DB::beginTransaction();
+
+                $order->status = OrderStatusEnum::cancelled->value;
+                $userAccount->total_balance += $order->full_price;
+
+                $order->save();
+                $userAccount->save();
+
+                DB::commit();
+            }
+
+            return response()->json([
+                'message' => "заказ отменен",
+                'code' => 200,
+            ], 200);
+        } catch (Throwable $th) {
+            DB::rollBack();
+
+            Log::debug("произошла ошибка:" . $th->getMessage() . " строка:" . $th->getLine());
+
+            return response()->json([
+                'message' => "произошла ошибка:" . $th->getMessage(),
+                'code' => $th->getCode(),
+            ], $th->getCode());
+        }
+    }
 }

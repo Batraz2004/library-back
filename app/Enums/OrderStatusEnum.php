@@ -5,7 +5,8 @@ namespace App\Enums;
 enum OrderStatusEnum: string
 {
     case active = 'active';
+    case completed = 'completed';
     case cancelled = 'cancelled';
-    case error = 'error';
     case disabled = 'disabled';
+    case error = 'error';
 }

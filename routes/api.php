@@ -65,8 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('order')->group(function () {
         Route::post('add', [OrderController::class, 'create']);
         Route::get('list', [OrderController::class, 'list']);
-        Route::delete('delete/{id}', [OrderController::class, 'deleteById']);
-        Route::delete('delete', [OrderController::class, 'deleteAll']);
+        Route::post('cancel/{id}', [OrderController::class, 'cancellById']);
     });
 
     Route::prefix('balance')->group(function () {
