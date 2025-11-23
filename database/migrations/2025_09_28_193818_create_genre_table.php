@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
+        Schema::create('genres', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('admin_id')->constrained()->cascadeOnDelete();
-
-            $table->json('data');
-
-            $table->boolean('is_active')->default(true);
-            $table->integer('sort')->default(500);
+            $table->string('title');
+            $table->boolean('is_active')->default(1);
+            $table->integer('position')->default(1);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('genres');
     }
 };

@@ -36,8 +36,13 @@ return [
     */
 
     'guards' => [
-        'web' => [
-            'driver' => 'session',
+        // 'web' => [
+        //     'driver' => 'session',
+        //     'provider' => 'users',
+        // ],
+        //этот api гвард который снизу уже вклюеен в sanctum и необязателен
+        'api' => [ 
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
         'admin' => [

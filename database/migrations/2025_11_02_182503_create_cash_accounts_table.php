@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
+        Schema::create('cash_accounts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('admin_id')->constrained()->cascadeOnDelete();
-
-            $table->json('data');
-
-            $table->boolean('is_active')->default(true);
-            $table->integer('sort')->default(500);
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('status')->default('awaiting');
+            $table->decimal('total_balance')->default(0);
+            $table->string('currency', 3)->default('RUB');
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('cash_accounts');
     }
 };

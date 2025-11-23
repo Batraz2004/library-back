@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\Enums\RoleEnum;
+use App\Events\AuthEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegistrationRequest;
 use App\Models\User;
@@ -19,6 +21,7 @@ class RegistrationController extends Controller
         // if (blank(User::where('email',$request->email)->first())) {//или проверять в request
             $result = DB::transaction(function () use ($request) {
                 $user = User::create($request->getData());
+                $user->assignRole(RoleEnum::USER->value);
 
                 if (!$user)
                     throw new Exception('не удалось зарегистрировать пользователя');
@@ -27,6 +30,8 @@ class RegistrationController extends Controller
                     $user->remember_token = Hash::make($token);
                     $user->save();
                 }
+
+                AuthEvent::dispatch($user->id);
 
                 return $token;
             });

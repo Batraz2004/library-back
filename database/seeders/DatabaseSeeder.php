@@ -26,10 +26,12 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             SellerSeeder::class,
         ];
-        
+
         if(App::environment('local'))//app_env in .env
         {
-            //
+            $seeder[] = PostSeeder::class;
+            $seeder[] = BookSeeder::class;
+            $seeder[] = GenreSeeder::class;
         }
 
         $this->call($seeders);

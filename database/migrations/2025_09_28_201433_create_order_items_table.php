@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
+        Schema::create('order_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('admin_id')->constrained()->cascadeOnDelete();
-
-            $table->json('data');
-
+            $table->foreignId('order_id')->constrained();
+            $table->foreignId('book_id')->constrained();
+            $table->integer('quantity');
+            $table->decimal('price',10,3);
+            $table->integer('sort_index')->default(500);
             $table->boolean('is_active')->default(true);
-            $table->integer('sort')->default(500);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('order_items');
     }
 };

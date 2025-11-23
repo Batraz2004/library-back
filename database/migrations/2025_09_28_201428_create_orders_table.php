@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
+        Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('admin_id')->constrained()->cascadeOnDelete();
-
-            $table->json('data');
-
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('status')->default('active');
+            $table->string('address');
+            $table->integer('sort_index')->default(500);
             $table->boolean('is_active')->default(true);
-            $table->integer('sort')->default(500);
+            $table->decimal('full_price',10,3);
+            $table->string('phone');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -28,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('orders');
     }
 };
