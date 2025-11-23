@@ -13,6 +13,10 @@ class Book extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'price' => 'double',
+    ];
+
     public function genres()
     {
         return $this->belongsToMany(Genre::class);

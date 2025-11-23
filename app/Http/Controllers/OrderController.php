@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatusEnum;
+use App\Http\Requests\OrderCreateRequest;
+use App\Http\Resources\OrderResource;
 use App\Models\CartItem;
-use App\Models\CashAccount;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
-use Exception;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +17,7 @@ use Throwable;
 
 class OrderController extends Controller
 {
-    public function create(Request $request)
+    public function create(OrderCreateRequest $request)
     {
         /** @var User $user */
         $user = Auth::user();
@@ -80,21 +79,30 @@ class OrderController extends Controller
                 $response = OrderStatusEnum::active->value;
 
                 DB::commit();
+
+                return response()->json(
+                    [
+                        'order' => OrderResource::make($order),
+                        'status' => $response,
+                        'code' => 200
+                    ],
+                    200
+                );
             } catch (Throwable $th) {
                 DB::rollBack();
 
                 Log::debug("произошла ошибка:" . $th->getMessage() . " строка:" . $th->getLine());
 
                 $response = OrderStatusEnum::error->value;
-            }
 
-            return response()->json(
-                [
-                    'status' => $response,
-                    'code' => 200
-                ],
-                200
-            );
+                return response()->json(
+                    [
+                        'status' => $response,
+                        'code' => $th->getCode()
+                    ],
+                    $th->getCode()
+                );
+            }
         }
     }
 
@@ -110,7 +118,7 @@ class OrderController extends Controller
                 ->get();
 
             return response()->json([
-                'data' => $order,
+                'data' => OrderResource::collection($order),
                 'code' => 200,
             ], 200);
         } catch (Throwable $th) {
@@ -150,6 +158,7 @@ class OrderController extends Controller
             }
 
             return response()->json([
+                'order' => OrderResource::make($order),
                 'message' => "заказ отменен",
                 'code' => 200,
             ], 200);

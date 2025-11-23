@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\BookMarkRequest;
+use App\Http\Resources\BookMarkCollection;
+use App\Http\Resources\BookMarkResource;
 use App\Models\Book;
 use App\Models\Bookmark;
 use App\Models\User;
@@ -36,7 +38,7 @@ class BookmarkController extends Controller
 
         return response()->json([
             'message' => 'добавлено в избранное',
-            'data' => $bookmark,
+            'data' =>  BookMarkResource::make($bookmark),
             'code' => 200
         ], 200);
     }
@@ -48,7 +50,12 @@ class BookmarkController extends Controller
         $bookmarks = $user?->bookmarks()->isActive()->get();
 
         return response()
-            ->json(['data' => $bookmarks], 200);
+            ->json(
+                [
+                    'data' => BookMarkResource::collection($bookmarks)
+                ],
+                200
+            );
     }
 
     public function deleteAll()
@@ -101,14 +108,22 @@ class BookmarkController extends Controller
 
         Session::save();
 
-        return response()->json(['message' => 'добавлено в избранное', 'product' => $bookmarks, 'code' => 200], 200);
+        return response()->json([
+            'message' => 'добавлено в избранное',
+            'product' => $bookmarks,
+            'code' => 200
+        ], 200);
     }
 
     public function listGuest()
     {
         $bookmarks = Session::get('user.bookmarks') ?? [];
-        return response()->json(['bookmarks' => $bookmarks, 'code' => 200], 200);
+        return response()->json([
+            'bookmarks' => $bookmarks,
+            'code' => 200
+        ], 200);
     }
+
     public function deleteByIdGuest($id)
     {
         $bookmarks = Session::pull('user.bookmarks');
@@ -118,7 +133,10 @@ class BookmarkController extends Controller
 
         Session::save();
 
-        return response()->json(['message' => 'удалено', 'code' => 200], 200);
+        return response()->json([
+            'message' => 'удалено',
+            'code' => 200
+        ], 200);
     }
 
     public function deleteAllGuest()
@@ -129,6 +147,9 @@ class BookmarkController extends Controller
         Session::flush();
         Session::regenerate();
 
-        return response()->json(['message' => 'удалено', 'code' => 200], 200);
+        return response()->json([
+            'message' => 'удалено',
+            'code' => 200
+        ], 200);
     }
 }

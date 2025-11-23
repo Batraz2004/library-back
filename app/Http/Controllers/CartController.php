@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CartItemRequest;
+use App\Http\Resources\CartItemResource;
 use App\Models\Cart;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -9,9 +11,9 @@ use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    public function create(Request $request)
+    public function create(CartItemRequest $request)
     {
-        /**@var User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         $cart = Cart::query()
@@ -33,9 +35,11 @@ class CartController extends Controller
             $cartItem->save();
         }
 
+        $cartItem->price = $cartItem->quantity * $cartItem->book->price;
+
         return response()->json([
             'message' => 'добавлено в корзину',
-            'data' => $cartItem,
+            'data' => CartItemResource::make($cartItem),
             'code' => 200
         ], 200);;
     }
@@ -53,7 +57,7 @@ class CartController extends Controller
         });
 
         return response()->json([
-            'data' => $cartItems ?? 'cart is empty',
+            'data' => CartItemResource::collection($cartItems),
             'code' => 200,
         ], 200);
     }
