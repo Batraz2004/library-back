@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('genre', function (Blueprint $table) {
+        Schema::create('genres', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->boolean('is_active')->default(1);
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('genre');
+        Schema::dropIfExists('genres');
     }
 };
