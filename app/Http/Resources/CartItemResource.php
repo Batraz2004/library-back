@@ -20,7 +20,7 @@ class CartItemResource extends JsonResource
             'book_id' => $this->book_id,   
             'quantity' => $this->quantity,   
             'is_checked' => $this->is_checked, 
-            'price' => $this->price,
+            'price' => $this?->book?->price * $this->quantity,
             'book' => BookResource::make($this->whenLoaded('book')),
         ];
     }

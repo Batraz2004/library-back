@@ -35,8 +35,6 @@ class CartController extends Controller
             $cartItem->save();
         }
 
-        $cartItem->price = $cartItem->quantity * $cartItem->book->price;
-
         return response()->json([
             'message' => 'добавлено в корзину',
             'data' => CartItemResource::make($cartItem),
@@ -52,9 +50,6 @@ class CartController extends Controller
         $cart = $user->cart;
 
         $cartItems = $cart?->cartItems()->isActive()->get();
-        $cartItems = $cartItems?->each(function ($item, $key) {
-            $item->price = $item->book->price;
-        });
 
         return response()->json([
             'data' => CartItemResource::collection($cartItems),
