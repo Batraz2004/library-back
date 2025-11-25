@@ -33,12 +33,16 @@ class CashAccountController extends Controller
         $balanceAccount = $user->account()?->firstOrCreate(['user_id' => $user->id], [
             'user_id' => $user->id,
             'currency' => $currency,
-            'status' => PaymentAccountStatusEnum::awaiting->value,//при первом заполнении станет active
+            'total_balance' => $amount,
+            'status' => PaymentAccountStatusEnum::awaiting->value, //при первом заполнении станет active
         ]);
 
         if (!$balanceAccount->wasRecentlyCreated) {
             if ($currency != $balanceAccount->currency)
                 abort(400, 'указанная валюта должна совпадать с валютой счета');
+
+            $balanceAccount->total_balance += $amount;
+            $balanceAccount->save();
         }
 
         //сохраним запись транзакции:
@@ -77,6 +81,19 @@ class CashAccountController extends Controller
             'data' => $balanceAccount,
             'amount' => $amount,
             'payment_url' => $checkoutSession->url
+        ], 200);
+    }
+
+    public function getBalance()
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        $balance = $user?->account ?? 0;
+
+        return response()->json([
+            'data' => $balance,
+            'status' => 200,
         ], 200);
     }
 

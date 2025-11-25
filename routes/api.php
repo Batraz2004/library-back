@@ -32,9 +32,9 @@ Route::post('registration', [RegistrationController::class, 'createUser']);
 Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
 
-Route::prefix('book')->group(function(){
-    Route::get('{name}',[BookController::class,'searchByName']);
-    Route::get('genre/{genreName}',[BookController::class,'searchByGenre']);
+Route::prefix('book')->group(function () {
+    Route::get('{name}', [BookController::class, 'searchByName']);
+    Route::get('genre/{genreName}', [BookController::class, 'searchByGenre']);
 });
 
 //для не авторизванных сохраним в сессию
@@ -71,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('balance')->group(function () {
         Route::post('add', [CashAccountController::class, 'create']);
+        Route::get('get', [CashAccountController::class, 'getBalance']);
     });
 });
 
