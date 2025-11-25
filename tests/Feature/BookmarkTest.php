@@ -116,4 +116,81 @@ class BookmarkTest extends TestCase
         $bookmarkLisDataData = $bookmarkLisDataNew->json('data');
         $this->assertEquals(count($bookmarkLisDataData), 0);
     }
+
+    public function test_bookmarkApiQuest(): void
+    {
+        //для логирования json
+        $headers = [
+            'Accept' => 'application/json'
+        ];
+
+        //добавить книгу в корзину:
+        $bookmarkItemData = [
+            'book_id' => 1,
+            'quantity' => 1,
+        ];
+
+        //доавбление нескольких книг
+        $bookmarkItem = $this->withHeaders($headers)->post('/api/guest/bookmark/add', $bookmarkItemData);
+        $bookmarkItem->assertStatus(200);
+
+        $bookmarkItemDataFirst = $bookmarkItem->json('data');
+        $bookmarkItemDataFirst = $bookmarkItemDataFirst[1]['quantity'];
+        $this->assertEquals($bookmarkItemDataFirst, 1);
+
+        $bookmarkItem = $this->withHeaders($headers)->post('/api/guest/bookmark/add', $bookmarkItemData);
+        $bookmarkItem->assertStatus(200);
+
+        $bookmarkItemDataSecond = $bookmarkItem->json('data');
+        $bookmarkItemDataSecondQuantity = $bookmarkItemDataSecond[1]['quantity'];
+        $this->assertEquals($bookmarkItemDataSecondQuantity, 2);
+
+        //добавление новой книги
+        $bookmarkItemData['book_id'] = 2;
+
+        $bookmarkItemNew = $this->withHeaders($headers)->post('/api/guest/bookmark/add', $bookmarkItemData);
+        $bookmarkItemNew->assertStatus(200);
+
+        $bookmarkItemNew = $bookmarkItemNew->json('data');
+        $bookmarkItemNewQuantity = $bookmarkItemNew[2]['quantity'];
+        $this->assertEquals($bookmarkItemNewQuantity, 1);
+
+        //добавление с конкретным количеством
+        $bookmarkItemData['book_id'] = 3;
+        $bookmarkItemData['quantity'] = 3;
+        $bookmarkItemNew = $this->withHeaders($headers)->post('/api/guest/bookmark/add', $bookmarkItemData);
+        $bookmarkItemNew->assertStatus(200);
+
+        $bookmarkItemNew = $bookmarkItemNew->json('data');
+        $bookmarkItemNewQuantity = $bookmarkItemNew[3]['quantity'];
+        $this->assertEquals($bookmarkItemNewQuantity, 3);
+
+        //проверим список коризны
+        $bookmarkLisData = $this->withHeaders($headers)->get('/api/guest/bookmark/list');
+        $bookmarkLisData->assertStatus(200);
+        $bookmarkLisData = $bookmarkLisData->json('data');
+        $this->assertEquals(count($bookmarkLisData), 3);
+
+        //удалим элемент корзины
+        $bookmarkItemDeleteItem = $this->withHeaders($headers)->delete('api/guest/bookmark/delete/' . key($bookmarkLisData));
+        $bookmarkItemDeleteItem->assertStatus(200);
+
+        //еще раз получим элементы корзины
+        $bookmarkLisData = $this->withHeaders($headers)->get('/api/guest/bookmark/list');
+        $bookmarkLisData->assertStatus(200);
+
+        $bookmarkLisDataData = $bookmarkLisData->json('data');
+        $this->assertEquals(count($bookmarkLisDataData), 2);
+
+        //полностью очистим корзину
+        $bookmarkDelete = $this->withHeaders($headers)->delete('/api/guest/bookmark/delete');
+        $bookmarkDelete->assertStatus(200);
+
+        //еще раз получим элементы корзины
+        $bookmarkLisDataNew = $this->withHeaders($headers)->get('/api/guest/bookmark/list');
+        $bookmarkLisDataNew->assertStatus(200);
+
+        $bookmarkLisDataData = $bookmarkLisDataNew->json('data');
+        $this->assertEquals(count($bookmarkLisDataData), 0);
+    }
 }

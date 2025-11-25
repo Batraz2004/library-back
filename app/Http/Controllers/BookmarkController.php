@@ -109,7 +109,7 @@ class BookmarkController extends Controller
 
         return response()->json([
             'message' => 'добавлено в избранное',
-            'product' => $bookmarks,
+            'data' => $bookmarks,
             'code' => 200
         ], 200);
     }
@@ -118,7 +118,7 @@ class BookmarkController extends Controller
     {
         $bookmarks = Session::get('user.bookmarks') ?? [];
         return response()->json([
-            'bookmarks' => $bookmarks,
+            'data' => $bookmarks,
             'code' => 200
         ], 200);
     }
@@ -128,8 +128,7 @@ class BookmarkController extends Controller
         $bookmarks = Session::pull('user.bookmarks');
         unset($bookmarks[$id]);
 
-        Session::put($bookmarks);
-
+        Session::put('user.bookmarks', $bookmarks);
         Session::save();
 
         return response()->json([
