@@ -45,6 +45,7 @@ return [
             'driver' => 'sanctum',
             'provider' => 'users',
         ],
+        //драйвер session так как seller и admin авторизуются через админ панель где используется сессия
         'admin' => [
             'driver' => 'session',
             'provider' => 'admins',

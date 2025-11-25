@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\BaseQueryTrait;
+use App\Traits\BaseQueryTrait;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +31,7 @@ class CartItem extends Model
         'book_id' => 'integer',
         'cart_id' => 'integer',
         'quantity' => 'integer',
+        'is_checked' => 'boolean',
     ];
 
     public function cart(): BelongsTo

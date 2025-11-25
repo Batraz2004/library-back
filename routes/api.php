@@ -7,12 +7,7 @@ use App\Http\Controllers\CashAccountController;
 use App\Http\Controllers\Client\LoginController;
 use App\Http\Controllers\Client\RegistrationController;
 use App\Http\Controllers\OrderController;
-use App\Models\Book;
-use App\Models\Bookmark;
-use App\Models\Cart;
-use App\Models\CartItem;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/test', function (Request $req) {
@@ -29,7 +24,6 @@ Route::get('/authTest', function () {
     ]);
 })->middleware('auth:sanctum');
 
-// Route::post('user',);
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -65,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('cart')->group(function () {
         Route::post('add', [CartController::class, 'create']);
         Route::get('list', [CartController::class, 'list']);
+        // Route::post('update', [CartController::class, 'checkItem']);
         Route::delete('delete/{id}', [CartController::class, 'deleteById']);
         Route::delete('delete', [CartController::class, 'deleteAll']);
     });

@@ -50,8 +50,7 @@ class BookmarkController extends Controller
         $bookmarks = $user?->bookmarks()->isActive()->get();
 
         return response()
-            ->json(
-                [
+            ->json([
                     'data' => BookMarkResource::collection($bookmarks)
                 ],
                 200

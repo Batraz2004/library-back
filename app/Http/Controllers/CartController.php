@@ -27,7 +27,8 @@ class CartController extends Controller
         ], [
             'cart_id' => $cart->id,
             'book_id' => $request->book_id,
-            'quantity' => $request->quantity
+            'quantity' => $request->quantity,
+            'is_checked' => true,
         ]);
 
         if (!$cartItem->wasRecentlyCreated) {
@@ -47,12 +48,14 @@ class CartController extends Controller
         /**@var User $user */
         $user = Auth::user();
 
-        $cart = $user->cart;
+        $cart = $user?->cart;
 
         $cartItems = $cart?->cartItems()->isActive()->get();
 
+        $data = filled($cartItems) ? CartItemResource::collection($cartItems) : [];
+
         return response()->json([
-            'data' => CartItemResource::collection($cartItems),
+            'data' => $data,
             'code' => 200,
         ], 200);
     }
@@ -63,6 +66,8 @@ class CartController extends Controller
         $user = Auth::user();
 
         $cart = $user->cart?->delete();
+
+        $user->load('cart');//загрузим обновленые данные для модели
 
         return response()->json([
             'data' => 'cart delete',

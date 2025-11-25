@@ -18,55 +18,27 @@ class RegistrationController extends Controller
 {
     public function createUser(RegistrationRequest $request)
     {
-        // if (blank(User::where('email',$request->email)->first())) {//или проверять в request
-            $result = DB::transaction(function () use ($request) {
-                $user = User::create($request->getData());
-                $user->assignRole(RoleEnum::USER->value);
+        $result = DB::transaction(function () use ($request) {
+            $user = User::create($request->getData());
+            $user->assignRole(RoleEnum::USER->value);
 
-                if (!$user)
-                    throw new Exception('не удалось зарегистрировать пользователя');
-                else {
-                    $token = $user->createToken('auth_token')->plainTextToken;
-                    $user->remember_token = Hash::make($token);
-                    $user->save();
-                }
+            if (!$user)
+                throw new Exception('не удалось зарегистрировать пользователя');
+            else {
+                $token = $user->createToken('auth_token')->plainTextToken;
+                $user->remember_token = Hash::make($token);
+                $user->save();
+            }
 
-                AuthEvent::dispatch($user->id);
+            AuthEvent::dispatch($user->id);
 
-                return $token;
-            });
+            return $token;
+        });
 
-            if ($result)
-                return response()->json(['message' => 'пользователь успешно создан', 'token' => $result], 200);
+        if ($result)
+            return response()->json(['message' => 'пользователь успешно создан', 'token' => $result], 200);
 
-            else
-                return response()->json(['message' => 'не удалось авторизоваться'], 200);
-        // } else
-            // return response()->json(['message' => 'пользователь уже сществует'], 200);
+        else
+            return response()->json(['message' => 'не удалось авторизоваться'], 200);
     }
-
-    //old
-    // public function createUser(Request $request)
-    // {
-    //     if (!Auth::attempt(['email' => $request->email, 'password'=> $request->password]) && filled($request)) {
-    //         $validateData = $request->validate([
-    //             'email'    => ['required', 'max:255', 'unique:users'],
-    //             'password' => ['required', 'max:255'],
-    //             'name'     => ['required', 'max:255'],
-    //         ]);
-
-    //         $user = User::create($request->all());
-    //         if (!$user)
-    //             throw new Exception('не удалось зарегистрировать пользователя');
-
-    //         $token = $user->createToken('auth_token')->plainTextToken;
-    //         $user->remember_token = Hash::make($token);
-    //         $user->save();
-    //     } 
-    //     else {
-    //         return response()->json(['message' => 'пользователь уже существует'], 200);
-    //     }
-
-    //     return response()->json(['message' => 'пользователь успешно создан', 'token' => $token], 200);
-    // }
 }
