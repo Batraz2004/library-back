@@ -23,7 +23,7 @@ class BookFactory extends Factory
             'title' => fake()->name(),
             'isbn' => fake()->uuid(),
             'price' => fake()->randomFloat(3,250,1200),
-            'count' => rand(1,10),
+            'count' => rand(5,30),
             'created_at' => now(),
         ];
     }

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatusEnum;
+use App\Enums\PaymentAccountStatusEnum;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\CartItem;
+use App\Models\CashAccount;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
@@ -23,33 +25,34 @@ class OrderController extends Controller
         $user = Auth::user();
 
         //баланс пользователя
+        /** @var CashAccount $userAccount */
+
         $userAccount = $user->account;
-        $userBalance = $userAccount->total_balance;
+        $userBalance = $userAccount?->total_balance;
 
+        if (blank($userBalance) || $userAccount->status != PaymentAccountStatusEnum::active->value) {
+            abort(400, 'счет не активен');
+        }
+    
         //выбранные товары в корзине
-        /** @var \Illuminate\Database\Eloquent\Builder $query */
-        $cartItemsQuery = $user->cart->cartItems()->getQuery();
-
-        /** @var \Illuminate\Database\Eloquent\Builder<CartItem> $query */
-        $checkedCartItems = $cartItemsQuery->isActive()
+        /** @var CartItem $checkedCartItems */
+        $checkedCartItems = $user->cart?->cartItems()
+            ->isActive()
             ->isChecked()
             ->with('book')
             ->withSum(['book'], 'price')
             ->get();
 
+        if (blank($checkedCartItems)) {
+            abort(404, 'корзина пуста');
+        }
+
         $totalPrice = $checkedCartItems->sum(function ($item) {
             /** @var CartItem $item */
             return $item->book_sum_price * $item->quantity;
         });
-
-        if ($userBalance < $totalPrice || blank($checkedCartItems)) {
-            return response()->json(
-                [
-                    'message' => 'не возможно оформить заказ',
-                    'code' => 400
-                ],
-                400
-            );
+        if (blank($userBalance) || $userBalance < $totalPrice || blank($checkedCartItems)) {
+            abort(400, 'не фозможно оформить заказ');
         } else {
             //процесс оформления заказа
             try {
@@ -65,6 +68,8 @@ class OrderController extends Controller
                     'phone'      => $request->phone,
                 ]);
 
+                $order->refresh();
+
                 $checkedCartItems->each(function ($item, $key) use ($order) {
                     $orderItem = OrderItem::create([
                         'order_id' => $order->id,
@@ -78,11 +83,13 @@ class OrderController extends Controller
 
                 $response = OrderStatusEnum::active->value;
 
+                $order->load('items');
+
                 DB::commit();
 
                 return response()->json(
                     [
-                        'order' => OrderResource::make($order),
+                        'data' => OrderResource::make($order),
                         'status' => $response,
                         'code' => 200
                     ],

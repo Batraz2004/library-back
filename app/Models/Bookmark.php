@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\BaseQueryTrait;
+use App\Traits\BaseQueryTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 

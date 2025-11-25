@@ -12,6 +12,10 @@ class Order extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'full_price' => 'double',
+    ];
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);

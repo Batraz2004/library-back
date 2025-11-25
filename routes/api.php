@@ -7,12 +7,7 @@ use App\Http\Controllers\CashAccountController;
 use App\Http\Controllers\Client\LoginController;
 use App\Http\Controllers\Client\RegistrationController;
 use App\Http\Controllers\OrderController;
-use App\Models\Book;
-use App\Models\Bookmark;
-use App\Models\Cart;
-use App\Models\CartItem;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/test', function (Request $req) {
@@ -29,7 +24,6 @@ Route::get('/authTest', function () {
     ]);
 })->middleware('auth:sanctum');
 
-// Route::post('user',);
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -38,11 +32,10 @@ Route::post('registration', [RegistrationController::class, 'createUser']);
 Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
 
-Route::prefix('book')->group(function(){
-    Route::get('{name}',[BookController::class,'searchByName']);
-    Route::get('genre/{genreName}',[BookController::class,'searchByGenre']);
+Route::prefix('book')->group(function () {
+    Route::get('{name}', [BookController::class, 'searchByName']);
+    Route::get('genre/{genreName}', [BookController::class, 'searchByGenre']);
 });
-
 
 //для не авторизванных сохраним в сессию
 Route::prefix('guest')->middleware('guest')->group(function () {
@@ -65,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('cart')->group(function () {
         Route::post('add', [CartController::class, 'create']);
         Route::get('list', [CartController::class, 'list']);
+        // Route::post('update', [CartController::class, 'checkItem']);
         Route::delete('delete/{id}', [CartController::class, 'deleteById']);
         Route::delete('delete', [CartController::class, 'deleteAll']);
     });
@@ -77,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('balance')->group(function () {
         Route::post('add', [CashAccountController::class, 'create']);
+        Route::get('get', [CashAccountController::class, 'getBalance']);
     });
 });
 
