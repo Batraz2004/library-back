@@ -37,7 +37,6 @@ Route::prefix('book')->group(function(){
     Route::get('genre/{genreName}',[BookController::class,'searchByGenre']);
 });
 
-
 //для не авторизванных сохраним в сессию
 Route::prefix('guest')->middleware('guest')->group(function () {
     Route::prefix('bookmark')->group(function () {

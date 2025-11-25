@@ -2,12 +2,18 @@
 
 namespace Tests\Feature;
 
+use App\Models\Book;
+use App\Models\Bookmark;
 use App\Traits\Tests\UserAuthTest;
 use Database\Seeders\BookSeeder;
 use Database\Seeders\RoleseAndPermissionsSeeder;
 use Database\Seeders\SellerSeeder;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class CartTest extends TestCase
@@ -27,9 +33,23 @@ class CartTest extends TestCase
         $this->seed(BookSeeder::class);
     }
 
+    public function tearDown(): void
+    {
+        // обнулм счетчики id и очистим таблицы(refreshDatabase не обнуляет бд)
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        DB::table('books')->truncate();
+        DB::table('sellers')->truncate();
+
+        parent::tearDown();
+    }
+
     public function test_cartApi(): void
     {
         $token = $this->userAuth();
+
+        $headers = [
+            'Accept' => 'application/json'
+        ];
 
         //добавить книгу в корзину:
         $cartAddItemData = [
@@ -38,14 +58,14 @@ class CartTest extends TestCase
         ];
 
         //доавбление нескольких книг
-        $cartAddItem = $this->withToken($token)->post('/api/cart/add', $cartAddItemData);
+        $cartAddItem = $this->withToken($token)->withHeaders($headers)->post('/api/cart/add', $cartAddItemData);
         $cartAddItem->assertStatus(200);
 
         $cartItemDataFirst = $cartAddItem->json('data');
         $cartItemDataFirstQuantity = $cartItemDataFirst['quantity'];
         $this->assertEquals($cartItemDataFirstQuantity, 1);
 
-        $cartAddItem = $this->withToken($token)->post('/api/cart/add', $cartAddItemData);
+        $cartAddItem = $this->withToken($token)->withHeaders($headers)->post('/api/cart/add', $cartAddItemData);
         $cartAddItem->assertStatus(200);
 
         $cartItemDataSecond = $cartAddItem->json('data');
@@ -55,7 +75,7 @@ class CartTest extends TestCase
         //добавление новой книги
         $cartAddItemData['book_id'] = 2;
 
-        $cartAddItemNew = $this->withToken($token)->post('/api/cart/add', $cartAddItemData);
+        $cartAddItemNew = $this->withToken($token)->withHeaders($headers)->post('/api/cart/add', $cartAddItemData);
         $cartAddItemNew->assertStatus(200);
 
         $carAddItemNew = $cartAddItemNew->json('data');
@@ -65,7 +85,7 @@ class CartTest extends TestCase
         //добавление с конкретным количеством
         $cartAddItemData['book_id'] = 3;
         $cartAddItemData['quantity'] = 3;
-        $cartAddItemNew = $this->withToken($token)->post('/api/cart/add', $cartAddItemData);
+        $cartAddItemNew = $this->withToken($token)->withHeaders($headers)->post('/api/cart/add', $cartAddItemData);
         $cartAddItemNew->assertStatus(200);
 
         $cartAddItemNew = $cartAddItemNew->json('data');
@@ -73,33 +93,32 @@ class CartTest extends TestCase
         $this->assertEquals($cartAddItemNewQuantity, 3);
 
         //проверим список коризны
-        $cartList = $this->withToken($token)->get('/api/cart/list');
+        $cartList = $this->withToken($token)->withHeaders($headers)->get('/api/cart/list');
         $cartList->assertStatus(200);
 
         $cartListData = $cartList->json('data');
         $this->assertEquals(count($cartListData), 3);
 
         //удалим элемент корзины
-        $cartDeleteItem = $this->withToken($token)->delete('api/cart/delete/' . $cartListData[0]['id']);
+        $cartDeleteItem = $this->withToken($token)->withHeaders($headers)->delete('api/cart/delete/' . $cartListData[0]['id']);
         $cartDeleteItem->assertStatus(200);
 
         //еще раз получим элементы корзины
-        $cartList = $this->withToken($token)->get('/api/cart/list');
+        $cartList = $this->withToken($token)->withHeaders($headers)->get('/api/cart/list');
         $cartList->assertStatus(200);
 
         $cartListData = $cartList->json('data');
         $this->assertEquals(count($cartListData), 2);
 
         //полностью очистим корзину
-        $cartDelete = $this->withToken($token)->delete('api/cart/delete');
+        $cartDelete = $this->withToken($token)->withHeaders($headers)->delete('api/cart/delete');
         $cartDelete->assertStatus(200);
 
         //еще раз получим элементы корзины
-        $cartListNew = $this->withToken($token)->get('/api/cart/list');
+        $cartListNew = $this->withToken($token)->withHeaders($headers)->get('/api/cart/list');
         $cartListNew->assertStatus(200);
 
         $cartListData = $cartListNew->json('data');
         $this->assertEquals(count($cartListData), 0);
     }
-
 }
