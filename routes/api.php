@@ -7,8 +7,11 @@ use App\Http\Controllers\CashAccountController;
 use App\Http\Controllers\Client\LoginController;
 use App\Http\Controllers\Client\RegistrationController;
 use App\Http\Controllers\OrderController;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Nette\Utils\Json;
 
 Route::post('/test', function (Request $req) {
     return response()->json([
@@ -24,8 +27,11 @@ Route::get('/authTest', function () {
     ]);
 })->middleware('auth:sanctum');
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
+Route::get('/profile', function (Request $request) {
+    $user = $request->user();
+    return response()->json([
+        'data' => $user,
+    ]);
 })->middleware('auth:sanctum');
 
 Route::post('registration', [RegistrationController::class, 'createUser']);
